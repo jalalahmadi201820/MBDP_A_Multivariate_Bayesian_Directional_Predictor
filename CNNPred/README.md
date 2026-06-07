@@ -1,16 +1,13 @@
-# CNNpred-pytorch
-CNNpred: CNN-based stock market prediction using a diverse set of variables
+## Configuration
 
-Implementation of the paper "CNNpred: CNN-based stock market prediction using a diverse set of variables" using Pytorch https://www.sciencedirect.com/science/article/abs/pii/S0957417419301915
+The hyperparameters of the statistical methods — including the **p-value threshold**, 
+the **window size for skewness and kurtosis computation**, and the **number of Monte Carlo (MC) samples** — 
+were selected based on a validation set constructed from the last **10% of the training data**.
 
-Please cite this paper using: <br/>
-@article{hoseinzade2019cnnpred,<br/>
-title={CNNpred: CNN-based stock market prediction using a diverse set of variables},<br/>
-author={Hoseinzade, Ehsan and Haratizadeh, Saman},<br/>
-journal={Expert Systems with Applications},<br/>
-volume={129},<br/>
-pages={273--285},<br/>
-year={2019},<br/>
-publisher={Elsevier}<br/>
-}
+## Usage
+
+To run any proposed idea:
+
+1. Place the repository folder inside your project directory.
+2. Execute the corresponding script for the desired idea.
 
