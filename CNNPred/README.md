@@ -9,5 +9,5 @@ were selected based on a validation set constructed from the last **10% of the t
 To run any proposed idea:
 
 1. Place the repository folder inside your project directory.
-2. Execute the corresponding script for the desired idea.
+2. Execute the corresponding script for the desired Method.
 
