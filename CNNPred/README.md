@@ -1,3 +1,10 @@
+### Implementation Variations
+Each of the following scripts corresponds to a specific idea proposed in the paper:
+
+*   **`CNNPred_with_Bayesian.py`**: Implementation of the model using Bayesian optimization/inference approaches.
+*   **`CNNPred_with_statistical_features.py`**: Incorporates advanced statistical features into the CNNPred.
+*   **`CNNPred_with_t-test.py`**: Leverages t-test statistics for feature validation or selection.
+*   **`all_ideas_combined.py`**:  It integrates all proposed ideas and methodologies into a single, unified framework, tested across all datasets.
 ## Configuration
 
 The hyperparameters of the statistical methods — including the **p-value threshold**, 
@@ -9,5 +16,4 @@ were selected based on a validation set constructed from the last **10% of the t
 To run any proposed idea:
 
 1. Place the repository folder inside your project directory.
-2. Execute the corresponding script for the desired Method.
-
+2. Execute the corresponding script for the desired idea.
