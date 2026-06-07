@@ -197,7 +197,7 @@ def main():
         trainer.model,
         test_loader,
         device=device,
-        mc_samples=30
+        mc_samples=50
     )
 
     # 5. Metrics Calculation & Inversion
