@@ -4,7 +4,7 @@ Each of the following scripts corresponds to a specific idea proposed in the pap
 *   **`DANSMP_with_Bayesian.py`**: Implementation of the model using Bayesian optimization/inference approaches.
 *   **`DANSMP_with_statistical_features.py`**: Incorporates advanced statistical features into the DANSMP.
 *   **`DANSMP_with_t-test.py`**: Leverages t-test statistics for feature validation or selection.
-*   **`all_ideas_combined.py`**:  It integrates all proposed ideas and methodologies into a single, unified framework, tested across all datasets.
+*   **`DANSMP_with_BTMF.py`**:  Integrates the GraphCNN (DANSMP) model with sentiment analysis and the Bayesian Temporal Modeling Framework (BTMF)
 ## Configuration
 
 The hyperparameters of the statistical methods — including the **p-value threshold**, 
