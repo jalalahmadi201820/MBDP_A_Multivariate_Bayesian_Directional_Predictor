@@ -7,9 +7,7 @@ Each of the following scripts corresponds to a specific idea proposed in the pap
 *   **`DANSMP_with_BTMF.py`**:  Integrates the GraphCNN (DANSMP) model with sentiment analysis and the Bayesian Temporal Modeling Framework (BTMF)
 ## Configuration
 
-The hyperparameters of the statistical methods — including the **p-value threshold**, 
-the **window size for skewness and kurtosis computation**, and the **number of Monte Carlo (MC) samples** — 
-were selected based on a validation set constructed from the last **10% of the training data**.
+The hyperparameters of the statistical methods were selected based on a validation set constructed from the last **10% of the training data**.
 
 ## Usage
 
