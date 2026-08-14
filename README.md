@@ -1,2 +1,2 @@
-# When_Classical_Statistics_Meets_AI
-Repository accompanying the paper “When Classical Statistics Meets AI: Enhancing Financial Forecasting through Statistical Feature Engineering, Hypothesis Testing, and Bayesian Calibration.”
+# MBDP A Multivariate Bayesian Directional Predictor
+Repository accompanying the paper “MBDP: A Multivariate Bayesian Directional Predictor Built on Classical Statistical Intuitions for Market Direction Prediction.”
