@@ -1,1 +1,269 @@
 
+# MBDP Rolling Bayesian Market-Direction Experiments
+
+This repository contains three executable implementations of the rolling
+Multivariate Bayesian Directional Predictor (MBDP) described in:
+
+> **MBDP: A Rolling Multivariate Bayesian Generative Framework for Market Direction Prediction**
+
+The implementation follows the paper's main ideas:
+
+- multiscale lag-ratio features;
+- optional causal Max-Lag Skewness;
+- chronological rolling estimation;
+- class-conditional Gaussian or Student-t likelihoods;
+- Laplace-smoothed class priors;
+- probability-based BUY, SELL, and HOLD decisions;
+- training-only lag selection;
+- portfolio-level equity and risk evaluation.
+
+The scripts are intentionally silent. They do not print progress messages,
+logs, summaries, or chart paths. Each run writes one consolidated
+`metrics_summary.csv`.
+
+## File overview
+
+| File | Purpose | Dataset context |
+|---|---|---|
+| `FineRL.py` | FinRL-style rolling Bayesian strategy over multiple DJIA assets | DJIA post-pandemic / bullish-market environment |
+| `DRL_Ensemble.py` | DRL-Ensemble-style rolling Bayesian strategy over multiple DJIA assets | DJIA stability and crash environment |
+| `XGboost_GRU.py` | Bitcoin rolling Bayesian strategy with regular and Max-Lag Skew variants | Bitcoin crypto-winter bear-market environment |
+
+`XGboost_GRU.py` keeps its historical filename for project compatibility.
+The current implementation is the shared rolling Bayesian engine and does not
+train an XGBoost estimator directly.
+
+## Relationship to the paper
+
+| Paper component | Implementation |
+|---|---|
+| Lag-ratio feature vector | `build_samples()` |
+| Optional causal Max-Lag Skewness feature | `build_samples(..., include_maxlag_skew=True)` |
+| Chronological train/test split | `split_df()` |
+| Rolling class-conditional estimation | `rolling_trade()` and `fit_params()` |
+| Covariance regularization | `regularized_covariance()` |
+| Gaussian likelihood | `logpdf_multivariate_normal()` |
+| Student-t likelihood | `logpdf_multivariate_student_t()` |
+| Bayesian posterior scores | `predict_proba()` |
+| BUY/SELL/HOLD generation and position management | `rolling_trade()` |
+| Candidate lag generation | `generate_random_lag_sets()` |
+| Training-only lag selection | `run_multi_test_lag_search()` or `select_best_lags()` |
+| Portfolio aggregation | `build_portfolio_for_method()` |
+| Test performance metrics | `compute_metrics()` or `compute_portfolio_metrics()` |
+| Final CSV export | `write_metrics_summary()` |
+
+## Feature construction
+
+For a price series \(P_t\) and a lag set \(\mathcal{L}\), each sample contains
+the relative-price features:
+
+\[
+x_t =
+\left[
+\frac{P_t}{P_{t-m_1}},
+\frac{P_t}{P_{t-m_2}},
+\ldots,
+\frac{P_t}{P_{t-m_M}}
+\right].
+\]
+
+When `maxlag_skew` is enabled, the bias-corrected sample skewness of the
+causal price-level window
+
+\[
+[P_{t-\max(\mathcal{L})}, \ldots, P_t]
+\]
+
+is appended as one additional feature. It is calculated only from information
+available at time \(t\).
+
+The target is the next-period direction:
+
+\[
+y_t = \mathbb{1}(P_{t+k} > P_t),
+\]
+
+where `k` is controlled by `predict_day`.
+
+## Rolling Bayesian prediction
+
+At every prediction point, the model uses only the preceding rolling window.
+For the upward and downward classes it estimates:
+
+- smoothed class priors;
+- class-conditional feature means;
+- regularized covariance matrices.
+
+The model then evaluates either a multivariate Gaussian or Student-t
+likelihood and combines it with the local class prior in log space.
+
+Signals are generated from the posterior scores:
+
+- `BUY` when the upward probability exceeds the configured threshold;
+- `SELL` when the downward probability exceeds the configured threshold;
+- `HOLD` otherwise.
+
+`HOLD` preserves the previous position. Positions are represented as
+`-1` short, `0` flat, and `1` long.
+
+## Lag-selection methods
+
+The current final comparison contains exactly these four methods:
+
+```text
+raw_pnl
+raw_sharpe
+wilcoxon
+ttest
+```
+
+Lag selection is performed using the training partition only. The test
+partition is untouched until the selected lag set has been chosen.
+
+Mann-Whitney and Kolmogorov-Smirnov tests were removed from the implementation
+and are not included in the final comparison.
+
+Each method is evaluated in two variants:
+
+```text
+regular
+maxlag_skew
+```
+
+## Output
+
+Every script writes one file named:
+
+```text
+metrics_summary.csv
+```
+
+The CSV contains one row per available method and variant, with columns such
+as:
+
+```text
+method
+variant
+lags
+equity_start
+equity_end
+return_pct
+annual_return_pct
+annual_volatility_pct
+sharpe_ratio
+calmar_ratio
+max_drawdown_pct
+win_rate
+trades
+```
+
+Example row:
+
+```text
+raw_pnl,maxlag_skew,"(4, 22)",10000.0,17424.39,74.24,5.71,25.70,0.34,0.12,-46.90,0.42,84
+```
+
+No console output, progress output, logging output, charts, per-method CSVs,
+or normalized-equity files are generated by the main execution paths.
+
+## Input data
+
+### `FineRL.py` and `DRL_Ensemble.py`
+
+These scripts expect a CSV containing at least:
+
+```text
+Ticker
+Date
+Adj Close
+```
+
+The default data and output paths are configured inside each script's
+`main()` function. Update those paths before running the files on another
+machine.
+
+### `XGboost_GRU.py`
+
+This script accepts a pickle file containing a pandas DataFrame. It searches
+for a suitable price column from:
+
+```text
+Close, close, Adj Close, adj close, Price, price, Last, last
+```
+
+It accepts a date column from:
+
+```text
+Date, date, Datetime, datetime, Time, time
+```
+
+It can also use a `DatetimeIndex`.
+
+## Running the scripts
+
+Install the required Python packages:
+
+```bash
+pip install numpy pandas scipy
+```
+
+Run the DJIA scripts after updating their paths:
+
+```bash
+python FineRL.py
+python DRL_Ensemble.py
+```
+
+Run the Bitcoin script with its command-line options:
+
+```bash
+python XGboost_GRU.py \
+  --data-path BTCUSD_H4.pkl \
+  --output-dir bayesian_lag_search_results_mp
+```
+
+Useful command-line options for `XGboost_GRU.py` include:
+
+```text
+--train-start
+--train-end
+--test-start
+--test-end
+--lags
+--window-size
+--predict-day
+--dist
+--student-df
+--prob-threshold
+--commission
+--initial-capital
+--n-lag-sets
+--min-lags
+--max-lags
+--min-lag-value
+--max-lag-value
+--random-seed
+--n-workers
+```
+
+## Reproducibility and evaluation notes
+
+- Candidate lag sets are generated deterministically from the configured
+  random seed.
+- Lag selection uses training data only.
+- Test equity is calculated only after the lag-selection step.
+- The reported ratios and drawdowns depend on the configured annualization
+  factor and the selected train/test dates.
+- Results are backtest outputs and should not be interpreted as guarantees of
+  live-trading performance.
+
+## Verification
+
+The repository includes a lightweight output-contract test at
+`tests/test_output_contract.py`. It verifies that:
+
+- only the four supported methods remain;
+- Mann-Whitney and KS code is absent;
+- scripts contain no `print()` calls;
+- each script writes only `metrics_summary.csv`;
+- the exported CSV has the required summary columns.
