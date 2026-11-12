@@ -48,8 +48,8 @@ The two datasets used in the paper are included in the [`data/`](data/) folder:
 
 | File | Content | Size |
 |---|---|---|
-| [`data/djia30_full_2009_2022.csv`](data/djia30_full_2009_2022.csv) | Daily OHLCV panel of the 30 Dow Jones constituents, 2009-04-01 to 2022-03-31: 98,220 rows over 3,274 trading days. | 10.8 MB |
-| [`data/BTCUSD.pkl`](data/BTCUSD.pkl) | Bitcoin/USD H4 bars, 2020-01-01 to 2026-05-31: 14,052 bars over 2,342 days (six bars per day). | 0.7 MB |
+| [`data/djia30_full_2009_2022.csv`](data/djia30_full_2009_2022.csv) | Daily OHLCV panel of the 30 Dow Jones constituents, 2009-04-01 to 2022-03-31:  3,274 trading days. | 10.8 MB |
+| [`data/BTCUSD.pkl`](data/BTCUSD.pkl) | Bitcoin/USD  2020-01-01 to 2026-05-31: 2,342 days (six bars per day). | 0.7 MB |
 
 The CSV has the columns `Date`, `Ticker`, `Open`, `High`, `Low`, `Close`, `Adj Close` and `Volume`. The pickle is a `pandas.DataFrame` indexed by `datetime` with the columns `open`, `high`, `low`, `close` and `volume`.
 
