@@ -103,17 +103,6 @@ python MBDP/Cost_Sensitivity/compute_cost_sensitivity.py
 - All stochastic components are seeded; the Reality Check uses a fixed bootstrap seed (`20250303`) and 5,000 repetitions.
 - The appendix studies select their statistical hyperparameters on the last 10% of the training data.
 
-## Citation
-
-If you use this code, please cite the manuscript:
-
-```bibtex
-@article{mbdp2026,
-  title  = {MBDP: A Rolling Multivariate Bayesian Generative Framework for Market Direction Prediction},
-  year   = {2026},
-  note   = {Manuscript under review}
-}
-```
 
 ## License
 
