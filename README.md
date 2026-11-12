@@ -16,14 +16,14 @@ The repository has two parts:
 ```
 .
 ├── MBDP/
-│   ├── 01_MBDP_Core_Engine/                  shared engine + CLI
-│   ├── 02_Synchronized_Baselines_and_Reality_Check/
-│   ├── 03_Baseline_Comparative_Backtests/
-│   ├── 04_Lag_Selection_Sensitivity/
-│   ├── 05_Covariance_Robustness/
-│   ├── 06_Walk_Forward_Evaluation/
-│   ├── 07_Bitcoin_Regime_Windows/
-│   ├── 08_Cost_Sensitivity/
+│   ├── MBDP_Core_Engine/                  shared engine + CLI
+│   ├── Synchronized_Baselines_and_Reality_Check/
+│   ├── Baseline_Comparative_Backtests/
+│   ├── Lag_Selection_Sensitivity/
+│   ├── Covariance_Robustness/
+│   ├── Walk_Forward_Evaluation/
+│   ├── Bitcoin_Regime_Windows/
+│   ├── Cost_Sensitivity/
 │   ├── README.md                             detailed guide
 │   ├── SOURCE_MAP.md                         file → original script map
 │   └── requirements.txt
@@ -70,30 +70,30 @@ Python 3.10+ is recommended. All reported runs were executed on CPU; the engine 
 
 ```bash
 # 1. numerical self-test of the core engine (no data needed)
-python MBDP/01_MBDP_Core_Engine/mbdp_rolling_bayesian_classifier.py --self-test
+python MBDP/MBDP_Core_Engine/mbdp_rolling_bayesian_classifier.py --self-test
 
 # 2. full synchronized suite on all three profiles
-python MBDP/02_Synchronized_Baselines_and_Reality_Check/run_synchronized_baseline_suite.py \
+python MBDP/Synchronized_Baselines_and_Reality_Check/run_synchronized_baseline_suite.py \
     --stock-path data/djia30_full_2009_2022.csv \
     --btc-path data/BTCUSD.pkl \
     --output-dir results/synchronized
 
 # 3. cost sensitivity at 0 / 5 / 10 / 20 basis points per side
-python MBDP/08_Cost_Sensitivity/compute_cost_sensitivity.py
+python MBDP/Cost_Sensitivity/compute_cost_sensitivity.py
 ```
 
 ## What is where in the paper
 
 | Paper element | Code |
 |---|---|
-| Comparative backtested performance and MBDP ablations | `MBDP/03_Baseline_Comparative_Backtests/` |
-| Synchronized five-model baselines | `MBDP/02_Synchronized_Baselines_and_Reality_Check/run_synchronized_baseline_suite.py` |
-| White Reality Check and approximate deflated Sharpe ratio | `MBDP/02_Synchronized_Baselines_and_Reality_Check/` |
-| Lag-selection sensitivity (162 scenarios) | `MBDP/04_Lag_Selection_Sensitivity/` |
-| Covariance / scaling robustness (8 settings) | `MBDP/05_Covariance_Robustness/` |
-| Rolling-origin walk-forward evaluation | `MBDP/06_Walk_Forward_Evaluation/` |
-| Bitcoin regime windows | `MBDP/07_Bitcoin_Regime_Windows/` |
-| Commission sweep | `MBDP/08_Cost_Sensitivity/` |
+| Comparative backtested performance and MBDP ablations | `MBDP/Baseline_Comparative_Backtests/` |
+| Synchronized five-model baselines | `MBDP/Synchronized_Baselines_and_Reality_Check/run_synchronized_baseline_suite.py` |
+| White Reality Check and approximate deflated Sharpe ratio | `MBDP/Synchronized_Baselines_and_Reality_Check/` |
+| Lag-selection sensitivity (162 scenarios) | `MBDP/Lag_Selection_Sensitivity/` |
+| Covariance / scaling robustness (8 settings) | `MBDP/Covariance_Robustness/` |
+| Rolling-origin walk-forward evaluation | `MBDP/Walk_Forward_Evaluation/` |
+| Bitcoin regime windows | `MBDP/Bitcoin_Regime_Windows/` |
+| Commission sweep | `MBDP/Cost_Sensitivity/` |
 | Preliminary statistical modules on DANSMP / CNNpred / SAMBA | `Appendix_Tests/` |
 
 ## Reproducibility notes
