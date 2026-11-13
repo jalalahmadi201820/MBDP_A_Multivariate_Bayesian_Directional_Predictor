@@ -1,10 +1,14 @@
-# MBDP — Code for the Reported Results
+# MBDP — Research Code and Supplementary Experiments
 
-Python code that produces every numerical result in the manuscript and in the response to the referees. The executable logic is unchanged from the runs that generated the reported numbers; only leading module docstrings, non-English comments, decorative separators and file names were cleaned, and two driver scripts were pointed at the shared engine in `01_MBDP_Core_Engine`.
+This directory contains code associated with the manuscript and referee response. Folders `01`–`08` contain the archived-result workflows; `Supplementary_Experiments` contains the additional exploratory analyses prepared during revision. The supplementary runs are not replacements for, or independent validation of, the archived results.
 
-`SOURCE_MAP.md` maps every packaged file back to the script it was extracted from.
+The original packaging notes describe comment/docstring cleanup, file renaming and import/path adjustments in folders `01`–`08`. Those notes do not establish numerical equivalence of a fresh execution. Archived numerical tables and walk-forward dates have not been independently validated in the supplementary audit.
+
+`SOURCE_MAP.md` records the supplied provenance of the original workflows and the derivation of the supplementary scripts.
 
 ## Requirements
+
+The following instructions concern folders `01`–`08`. For the supplementary environment and commands, see [`Supplementary_Experiments/README.md`](Supplementary_Experiments/README.md).
 
 ```bash
 pip install -r requirements.txt
@@ -14,7 +18,7 @@ pip install -r requirements.txt
 
 ## Input data
 
-Both datasets are provided in the repository-level [`data/`](../data/) folder:
+For folders `01`–`08`, the supplied layout places both datasets in the repository-level [`data/`](../data/) folder. The descriptions below are inherited from the supplied documentation, not a new data audit. `Supplementary_Experiments` instead uses the data bundled in its own `Code.zip`; see its README.
 
 | File | Content |
 |---|---|
@@ -35,6 +39,7 @@ Run the scripts from the repository root and pass the paths explicitly, for exam
 | `06_Walk_Forward_Evaluation` | Rolling-origin evaluation with chronological splits. | Walk-forward table. |
 | `07_Bitcoin_Regime_Windows` | Nine Bitcoin regime windows with ensemble Reality Check. | Bitcoin regime-window table. |
 | `08_Cost_Sensitivity` | Exact repricing at 0, 5, 10 and 20 basis points per side. | Cost-aware table. |
+| `Supplementary_Experiments` | Eight separately runnable exploratory experiments and one diagnostic plotting script, with shared engine and bundled inputs. | Supplementary sensitivity analyses and BTC diagnostics; not validation of archived tables. |
 
 ## File map
 
@@ -62,9 +67,15 @@ python 01_MBDP_Core_Engine/mbdp_rolling_bayesian_classifier.py --self-test
 python 02_Synchronized_Baselines_and_Reality_Check/compute_deflated_sharpe_ratio.py
 ```
 
-## Conventions shared by all experiments
+## Protocol scope and verification limits
 
-- Every model in a comparison uses the same dates, features, horizon and execution rule.
-- Lag selection, class-conditional fits and portfolio weights use the training partition only.
-- The Reality Check uses block bootstrap with a fixed seed and 5,000 repetitions.
-- Commissions are quoted per side; spread, slippage and funding are held at zero unless the script says otherwise.
+- The archived workflows document synchronized comparisons and training-based fitting/selection. Consult each script for its actual dates, features, horizon and execution rule; these are not universal guarantees across all folders.
+- The archived Reality Check workflow documents a fixed-seed block bootstrap with 5,000 repetitions. The supplementary experiments do not add a new Reality Check or DSR calculation.
+- Commissions are quoted per side; a commission sweep is not a full spread, slippage or funding model.
+- Supplementary lag selection uses training data, with selected lags held fixed during scalar sensitivity sweeps. Full-file equity filtering still leaves selection/survivorship bias, and ex-post choice of analyses remains a limitation.
+- Supplementary BTC annualization uses 2,190 four-hour bars/year. Protocol and annualization differences prevent treating these runs as direct replacements for archived numbers.
+- Saved-output/source audits are consistency checks, not independent model refitting, validation of all historic claims, or visual PDF review. Syntax and experiment-routing checks passed for the separated scripts; the complete separated experiment suite has not been rerun.
+
+## Supplementary results
+
+See `Supplementary_Experiments/README.md` for individual experiment commands and output descriptions. If distributed alongside the code, `Complete_Supplementary_Results.csv` contains 118 portfolio summaries, 2,062 asset-metric rows and 122 selected-lag rows from the original combined supplementary run. It excludes archived tables and raw per-bar streams; it is not newly generated evidence from the separated launchers.
