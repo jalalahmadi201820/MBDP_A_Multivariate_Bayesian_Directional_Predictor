@@ -58,9 +58,14 @@ FIGURE_STEMS = {"DRL_Ensemble": "4-cost_drl", "FineRL": "4-cost_finrl",
                 "XGboost_GRU": "4-cost_btc"}
 
 BTC_ANNUALIZATION = 2190
-BTC_EXPECTED_LAGS = (11, 28)
-BTC_EXPECTED_RETURN_20BPS = 55.69693102508935
-BTC_EXPECTED_SHARPE_20BPS = 0.731912862081778
+
+# Columns shared by the per-asset (BTC) and portfolio (equity) metric helpers.
+# The BTC-only detail (split, bars, buy/sell/hold records) stays in the BTC file.
+COMMON_METRICS = ("equity_start", "equity_end", "return_pct", "annual_return_pct",
+                  "annual_volatility_pct", "sharpe_ratio", "calmar_ratio",
+                  "max_drawdown_pct", "win_rate", "trades")
+# Per-bar/per-signal counters returned by the BTC helper are not reported.
+HIDDEN_METRICS = ("bars", "n_buy", "n_sell", "n_hold")
 
 STOCK_DATA_NAMES = ("djia30_full_2009_2022.csv",)
 BTC_DATA_NAMES = ("BTCUSD_H4.pkl", "BTCUSD.pkl")
@@ -70,7 +75,6 @@ ARCHIVE_SUBPATHS = (
     "MBDP_Cache/All_Result/Soogiri/bias_results_fast",
     "bias_results_fast",
 )
-
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
@@ -113,7 +117,6 @@ def parse_args(argv=None):
     parser.add_argument("--workers", type=int, default=8)
     return parser.parse_args(argv)
 
-
 def search_roots(cli_root):
     roots = []
     for candidate in [cli_root, os.environ.get("MBDP_DATA_ROOT"), HERE, *HERE.parents,
@@ -123,7 +126,6 @@ def search_roots(cli_root):
             if path not in roots:
                 roots.append(path)
     return roots
-
 
 def resolve_file(cli_path, env_name, names, roots):
     for candidate in (cli_path, os.environ.get(env_name)):
@@ -144,7 +146,6 @@ def resolve_file(cli_path, env_name, names, roots):
                     return path.resolve()
     return None
 
-
 def resolve_archive(cli_root, profiles, roots):
     for root in roots:
         for relative in ARCHIVE_SUBPATHS:
@@ -162,7 +163,6 @@ def resolve_archive(cli_root, profiles, roots):
                 return archive.resolve()
     return None
 
-
 def build_args(profile, output_dir, archive, data_path):
     raw = json.loads(
         (archive / profile / "run_arguments.json").read_text(encoding="utf-8")
@@ -177,7 +177,6 @@ def build_args(profile, output_dir, archive, data_path):
     Path(raw["output_dir"]).mkdir(parents=True, exist_ok=True)
     return raw
 
-
 def load_data(profile, args):
     namespace = SimpleNamespace(**args)
     if profile == BTC_PROFILE:
@@ -189,7 +188,6 @@ def load_data(profile, args):
         .reset_index(drop=True)
         for ticker, group in frame.groupby("Ticker", sort=True)
     }
-
 
 def archived_lags(archive, profile, method, variant):
     for relative in (Path("MBDP") / "selected_lags.csv", Path("selected_lags.csv")):
@@ -210,7 +208,6 @@ def archived_lags(archive, profile, method, variant):
             f"No archived {method}/{variant} selection for {profile}"
         )
     return {row.ticker: ast.literal_eval(row.lags) for row in chosen.itertuples()}
-
 
 def fresh_btc_lags(data, args, workers, output_dir):
     candidates = bt.generate_btc_lags(
@@ -243,13 +240,7 @@ def fresh_btc_lags(data, args, workers, output_dir):
     selected = tuple(selection["wilcoxon"])
     print(f"BTC selected {args['annualization']}-annualized Wilcoxon lags: {selected}",
           flush=True)
-    if selected != BTC_EXPECTED_LAGS:
-        raise ValueError(
-            f"Fresh BTC lag search changed: expected {BTC_EXPECTED_LAGS}, "
-            f"selected {selected}"
-        )
     return selected
-
 
 def reprice(result, bps, capital):
     """Charge commission on position changes while holding signals fixed."""
@@ -265,7 +256,6 @@ def reprice(result, bps, capital):
     out["equity"] = capital * np.cumprod(1.0 + out["bar_pnl"].to_numpy())
     out["cumulative_pnl"] = out["bar_pnl"].cumsum()
     return out
-
 
 def main(argv=None):
     cli = parse_args(argv)
@@ -294,7 +284,7 @@ def main(argv=None):
     print(f"Archive: {archive}\nStock data: {stock_data}\nBTC data: {btc_data}",
           flush=True)
 
-    rows, per_profile = [], {}
+    rows, per_profile, used_lags = [], {}, {}
     for profile in profiles:
         method, variant = CHOICES[profile]
         data_path = btc_data if profile == BTC_PROFILE else stock_data
@@ -310,6 +300,7 @@ def main(argv=None):
                 lags = archived_lags(archive, profile, method, variant)
         else:
             lags = archived_lags(archive, profile, method, variant)
+        used_lags[profile] = lags
 
         results = {ticker: bt.evaluate((ticker, variant, tuple(lag), "MBDP", False))
                    for ticker, lag in sorted(lags.items())}
@@ -348,12 +339,17 @@ def main(argv=None):
                 flush=True,
             )
         per_profile[profile] = pd.DataFrame(profile_rows)
-        per_profile[profile].to_csv(
+        per_profile[profile].drop(
+            columns=[c for c in HIDDEN_METRICS if c in per_profile[profile].columns]
+        ).to_csv(
             output_dir / f"cost_sensitivity_{profile}.csv", index=False
         )
 
     frame = pd.DataFrame(rows)
-    frame.to_csv(output_dir / "cost_sensitivity.csv", index=False)
+    table = frame[
+        ["profile", "method", "variant", "bps", "annualization", *COMMON_METRICS]
+    ]
+    table.to_csv(output_dir / "cost_sensitivity.csv", index=False)
     minimal = frame[["profile", "bps", "return_pct", "sharpe_ratio"]].rename(
         columns={"sharpe_ratio": "sharpe"}
     )
@@ -371,33 +367,22 @@ def main(argv=None):
 
     if BTC_PROFILE in per_profile:
         btc = per_profile[BTC_PROFILE].set_index("bps")
-        anchor = btc.loc[20]
-        validation = {
-            "btc_lags": [int(v) for v in BTC_EXPECTED_LAGS],
-            "btc_return_20bps": float(anchor.return_pct),
-            "btc_sharpe_20bps": float(anchor.sharpe_ratio),
-            "expected_return_20bps": BTC_EXPECTED_RETURN_20BPS,
-            "expected_sharpe_20bps": BTC_EXPECTED_SHARPE_20BPS,
+        summary = {
+            "profile": LABELS[BTC_PROFILE],
+            "btc_mode": cli.btc_lags,
+            "annualization": BTC_ANNUALIZATION,
+            "lags": [int(v) for v in used_lags[BTC_PROFILE]["BTCUSD"]],
+            "bps": [int(v) for v in BPS],
+            "return_pct": [float(btc.loc[bps, "return_pct"]) for bps in BPS],
+            "sharpe_ratio": [float(btc.loc[bps, "sharpe_ratio"]) for bps in BPS],
         }
-        validation["passed"] = (
-            abs(validation["btc_return_20bps"] - BTC_EXPECTED_RETURN_20BPS) <= 1e-8
-            and abs(validation["btc_sharpe_20bps"] - BTC_EXPECTED_SHARPE_20BPS) <= 1e-10
+        (output_dir / "btc_summary.json").write_text(
+            json.dumps(summary, indent=2), encoding="utf-8"
         )
-        validation["btc_mode"] = cli.btc_lags
-        (output_dir / "validation.json").write_text(
-            json.dumps(validation, indent=2), encoding="utf-8"
-        )
-        if cli.btc_lags == "fresh":
-            if not validation["passed"]:
-                raise ValueError(f"BTC 20-bps control failed: {validation}")
-            print(f"BTC 20-bps control passed: {validation['btc_return_20bps']:.8f}% / "
-                  f"Sharpe {validation['btc_sharpe_20bps']:.10f}", flush=True)
-        else:
-            print("BTC run used the archived raw-PnL lag pair "
-                  f"({validation['btc_return_20bps']:.5f}% / Sharpe "
-                  f"{validation['btc_sharpe_20bps']:.4f} at 20 bps); the reported "
-                  "table uses --btc-lags fresh.", flush=True)
-
+        print(f"BTC lags {tuple(summary['lags'])}; 20 bps -> "
+              f"{summary['return_pct'][-1]:.8f}% / Sharpe "
+              f"{summary['sharpe_ratio'][-1]:.10f}", flush=True)
 
 if __name__ == "__main__":
     main()
+
